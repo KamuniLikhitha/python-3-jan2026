@@ -1,0 +1,17 @@
+class Solution:
+    def separateSquares(self, squares: List[List[int]]) -> float:
+        halfArea = sum(l*l for _, _, l in squares) / 2
+        events = sorted([(y, True, l) for _, y, l in squares] +
+                        [(y + l, False, l) for _, y, l in squares])
+        area = 0
+        width = 0
+        prevY = events[0][0]
+        for y, isStart, l in events:
+            dy = y - prevY
+            if dy > 0:
+                if area + width * dy >= halfArea:
+                    return prevY + (halfArea - area) / width
+                area += width * dy
+                prevY = y
+            width += l if isStart else -l
+        return prevY
