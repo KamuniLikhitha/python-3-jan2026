@@ -1,0 +1,62 @@
+from bisect import bisect_left
+from typing import List
+class SegmentTree:
+    def __init__(self, coords: List[int]):
+        self.coords = coords
+        self.n = len(coords) - 1
+        self.cover = [0] * (4 * self.n)
+        self.length = [0] * (4 * self.n)
+    def update(self, idx, left, right, ql, qr, delta):
+        if qr <= left or right <= ql:
+            return
+        if ql <= left and right <= qr:
+            self.cover[idx] += delta
+        else:
+            mid = (left + right) // 2
+            self.update(idx*2, left, mid, ql, qr, delta)
+            self.update(idx*2+1, mid, right, ql, qr, delta)
+        if self.cover[idx] > 0:
+            self.length[idx] = self.coords[right] - self.coords[left]
+        else:
+            if right - left == 1:
+                self.length[idx] = 0
+            else:
+                self.length[idx] = self.length[idx*2] + self.length[idx*2+1]
+    def total_covered(self):
+        return self.length[1]
+class Solution:
+    def separateSquares(self, squares: List[List[int]]) -> float:
+        events = []
+        xs = set()
+        for x, y, l in squares:
+            events.append((y, 1, x, x + l))
+            events.append((y + l, -1, x, x + l))
+            xs.add(x)
+            xs.add(x + l)
+        events.sort(key=lambda e: e[0])
+        xs = sorted(xs)
+        tree_for_area = SegmentTree(xs)
+        prev_y = events[0][0]
+        total_area = 0
+        for y, typ, xl, xr in events:
+            cur_len = tree_for_area.total_covered()
+            total_area += cur_len * (y - prev_y)
+            i1 = bisect_left(xs, xl)
+            i2 = bisect_left(xs, xr)
+            tree_for_area.update(1, 0, tree_for_area.n, i1, i2, typ)
+            prev_y = y
+        half = total_area / 2.0
+        tree = SegmentTree(xs)
+        prev_y = events[0][0]
+        area_so_far = 0
+        for y, typ, xl, xr in events:
+            cur_len = tree.total_covered()
+            delta_area = cur_len * (y - prev_y)
+            if area_so_far + delta_area >= half:
+                return prev_y + (half - area_so_far) / cur_len
+            area_so_far += delta_area
+            i1 = bisect_left(xs, xl)
+            i2 = bisect_left(xs, xr)
+            tree.update(1, 0, tree.n, i1, i2, typ)
+            prev_y = y
+        return prev_y
