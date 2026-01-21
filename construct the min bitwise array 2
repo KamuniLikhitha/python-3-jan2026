@@ -1,0 +1,10 @@
+class Solution:
+    def minBitwiseArray(self, nums: List[int]) -> List[int]:
+        ans = []
+        for x in nums:
+            if x % 2 == 0:
+                ans.append(-1)
+            else:
+                lb = (x + 1) & -(x + 1)
+                ans.append(x - (lb >> 1))
+        return ans
